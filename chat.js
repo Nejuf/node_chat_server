@@ -42,7 +42,7 @@ var server = net.createServer(function (stream) {
 
   stream.addListener("data", function (data) {
   	if (data.match(/\n/)){
-  		stream.write('\033[1A' + '\r\033[K');//clears previous line
+  		stream.write('\033[1A' + '\r\033[K');//clears input (previous line)
   		
   		if(enteringUsername){
   			name = client.message;
@@ -132,5 +132,5 @@ var nameReserved = function(name){
 
 console.log("Server created.");
 server.listen(7000, function(){
-	console.log("Chat server listening on localhost 7000.")
+	console.log("Chat server listening on port 7000.")
 });
