@@ -95,6 +95,10 @@ var server = net.createServer(function (stream) {
   				client.message = "";
 					sendMessage("The name \"" + name + "\" is already taken by another user.", "self");
   			}
+  			else if(nameInvalid(name)){
+  				client.message = "";
+  				sendMessage("The name \"" + name + "\" is not a valid name.", "self");
+  			}
   			else{
   				enteringUsername = false;
 	  			client.name = client.message;
@@ -120,7 +124,7 @@ var server = net.createServer(function (stream) {
 			  			client.message = "";
 			    		clients.forEach(function(c) {
 			    			var roomName = c.room ? c.room.name : "N/A"
-			          sendMessage("- " + c.name + " [" + c.room.name + "]", 'self');
+			          sendMessage("- " + c.name + " [" + roomName + "]", 'self');
 			        });
 		    		break;
 		    		case 'quit':
@@ -152,7 +156,6 @@ var server = net.createServer(function (stream) {
 		    				client.changeRoom(joinRoom);
 		    			}
 		    			else{
-		    				debugger
 			    			client.message = "";
 			    			sendMessage("There is no room of the name: " + command[1], 'self');
 		    			}
@@ -205,6 +208,13 @@ var nameTaken = function(name){
 
 var nameReserved = function(name){
 	if (RESERVED_NAMES.indexOf(name.toLowerCase()) >= 0){
+		return true;
+	}
+	return false;
+}
+
+var nameInvalid = function(name){
+	if (name.match(/^\//) || name.length < 1){
 		return true;
 	}
 	return false;
