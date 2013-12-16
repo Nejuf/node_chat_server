@@ -61,22 +61,6 @@ var server = net.createServer(function (stream) {
   	}
   };
 
-	Client.prototype.changeRoom = function(newRoom){
-		var client = this;
-		if(client.room){
-			client.room.members.splice(client.room.members.indexOf(client), 1);
-			sendMessage(client.name + " has left the room.", "room", true);
-		}
-
-		client.room = newRoom;
-		newRoom.members.push(client);
-		sendMessage(client.name + " has joined the room.", "room", true);
-		sendMessage("Welcome to the " + newRoom.name + " room!\r\nCurrent users:\r\n", "self", true);
-		newRoom.members.forEach(function(c) {
-      sendMessage("- " + c.name, 'self');
-    });
-	}
-
   stream.write("Welcome to Chat!\r\n Use /quit, /end, or /exit to leave chat.\r\n\nPlease enter your username:\r\n");
   var enteringUsername = true;
 
@@ -132,6 +116,7 @@ var server = net.createServer(function (stream) {
 		    		case 'exit':
 		    		case 'leave':
 			  			client.message = "";
+			  			changeRoom(null);
 			        stream.end();
 			        return;
 		    		break;
@@ -153,7 +138,7 @@ var server = net.createServer(function (stream) {
 
 		    			if(joinRoom){
 		    				client.message = "";
-		    				client.changeRoom(joinRoom);
+		    				changeRoom(joinRoom);
 		    			}
 		    			else{
 			    			client.message = "";
@@ -184,13 +169,35 @@ var server = net.createServer(function (stream) {
 
   });
 
+	stream.addListener("timeout", function(){
+		stream.end();
+	});
+
   stream.addListener("end", function() {
     clients.splice(clients.indexOf(client), 1);
-
-    sendMessage(client.name + " has left.\r\n", null, true);
-
-    stream.end();
+    if(client.room){
+    	changeRoom(null);
+    }
+  	sendMessage(client.name + " has left chat.", "global", true);
+  	return;
   });
+
+  var changeRoom = function(newRoom){
+		if(client.room){
+			client.room.members.splice(client.room.members.indexOf(client), 1);
+			sendMessage(client.name + " has left the room.", "room", true);
+		}
+
+		if (newRoom){
+			client.room = newRoom;
+			newRoom.members.push(client);
+			sendMessage(client.name + " has joined the room.", "room", true);
+			sendMessage("Welcome to the \"" + newRoom.name + "\" room!\r\nCurrent users:\r\n", "self", true);
+			newRoom.members.forEach(function(c) {
+	      sendMessage("- " + c.name, 'self');
+	    });
+		}
+	}
 });
 
 var nameTaken = function(name){
