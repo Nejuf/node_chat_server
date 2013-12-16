@@ -1,14 +1,23 @@
+(function(root){ "use-strict";
+
 var net = require("net");
 
 var RESERVED_NAMES = ['user', 'users', 'self', 'bot', 'mod', 'moderator', 'admin', 'administrator', 'system'];
 
-function Client(stream) {
+var Client = function(stream) {
   this.name = null;
   this.stream = stream;
   this.message = "";
+  this.room = null;
+}
+
+var Room = function(name){
+	this.name = name;
+	this.members = [];
 }
 
 var clients = [];
+var rooms = [new Room('chat'), new Room('support'), new Room('contests')];
 
 console.log("Creating server...");
 var server = net.createServer(function (stream) {
@@ -20,7 +29,7 @@ var server = net.createServer(function (stream) {
   stream.setTimeout(0);
   stream.setEncoding("utf8");
 
-  var sendMessage = function(message, target){
+  var sendMessage = function(message, target, fromSystem){
   	if(!message){
   		message = client.message + "\r";
   		client.message = "";
@@ -29,13 +38,44 @@ var server = net.createServer(function (stream) {
   		case "self":
   			client.stream.write(message + "\r\n");
   		break;
-  		default:
+  		case "global":
+				fromName = fromSystem ? "System" : client.name
+
 	  		clients.forEach(function(c) {
-	        c.stream.write("\r\033[K" + client.name + ": " + message + "\r\n" + c.message);
+	        c.stream.write("\r\033[K" + fromName + ": " + message + "\r\n" + c.message);
 	      });
+  		break;
+  		case "room":
+  		default:
+  			if(client.room) {
+	  			fromName = fromSystem ? "System" : client.name
+
+		  		client.room.members.forEach(function(c) {
+		        c.stream.write("\r\033[K" + fromName + ": " + message + "\r\n" + c.message);
+		      });
+		  	}
+		  	else {
+		  		client.stream.write("Failed to send: " + message + "\r\nYou must be in a room to send messages.\r\n  **(Try /rooms then /join <room_name>)\r\n")
+		  	}
 	    break;
   	}
   };
+
+	Client.prototype.changeRoom = function(newRoom){
+		var client = this;
+		if(client.room){
+			client.room.members.splice(client.room.members.indexOf(client), 1);
+			sendMessage(client.name + " has left the room.", "room", true);
+		}
+
+		client.room = newRoom;
+		newRoom.members.push(client);
+		sendMessage(client.name + " has joined the room.", "room", true);
+		sendMessage("Welcome to the " + newRoom.name + " room!\r\nCurrent users:\r\n", "self", true);
+		newRoom.members.forEach(function(c) {
+      sendMessage("- " + c.name, 'self');
+    });
+	}
 
   stream.write("Welcome to Chat!\r\n Use /quit, /end, or /exit to leave chat.\r\n\nPlease enter your username:\r\n");
   var enteringUsername = true;
@@ -60,31 +100,67 @@ var server = net.createServer(function (stream) {
 	  			client.name = client.message;
 	  			client.message = "";
 
-	  			sendMessage(client.name + " has joined the room.");
+	  			sendMessage("Greetings, " + client.name + "!  Please join a room to start chatting. (Hint: /rooms or /join <room_name>)\r\n", "self", true);
   			}
   		}
   		else {
-  			var command = client.message.match(/^\/(.*)/);
+  			var clean_message = client.message.replace(/(\r\n|\n|\r)/gm,"");
 
-		    if (command) {
-		    	switch(command[1].toLowerCase()){
+		    if (clean_message[0] === "/") {
+	  			var command = clean_message.match(/([^\/\s]\S*)/g);
+		    	switch(command[0].toLowerCase()){
+		    		case 'commands':
+		    			sendMessage("/commands", 'self');
+		    			sendMessage("/users", 'self');
+		    			sendMessage("/quit, /end, /exit", 'self');
+		    			sendMessage("/rooms", 'self');
+		    			sendMessage("/join <room_name>", 'self');
+		    		break;
 		    		case 'users':
 			  			client.message = "";
 			    		clients.forEach(function(c) {
-			          sendMessage("- " + c.name, 'self');
+			    			var roomName = c.room ? c.room.name : "N/A"
+			          sendMessage("- " + c.name + " [" + c.room.name + "]", 'self');
 			        });
 		    		break;
 		    		case 'quit':
 		    		case 'end':
 		    		case 'exit':
+		    		case 'leave':
 			  			client.message = "";
 			        stream.end();
 			        return;
 		    		break;
+		    		case 'rooms':
+			    		client.message = "";
+			    		rooms.forEach(function(r) {
+			    			roomName = r === client.room ? ("*" + r.name) : r.name
+			          sendMessage("- " + roomName, 'self');
+			        });
+		    		break;
+		    		case 'join':
+		    			var joinRoom;
+		    			rooms.forEach(function(r){
+		    				if(r.name === command[1]){
+		    					joinRoom = r;
+		    					return;
+		    				}
+		    			});
+
+		    			if(joinRoom){
+		    				client.message = "";
+		    				client.changeRoom(joinRoom);
+		    			}
+		    			else{
+		    				debugger
+			    			client.message = "";
+			    			sendMessage("There is no room of the name: " + command[1], 'self');
+		    			}
+		    		break;
 		    		default:
 		    			message = client.message;
 		    			client.message = "";
-		    			sendMessage("Unrecognized command: " + client.message, 'self');
+		    			sendMessage("Unrecognized command: " + message, 'self');
 		    		break;
 		    	}
 		    }
@@ -94,7 +170,13 @@ var server = net.createServer(function (stream) {
 	  	}
   	}
   	else{
-  		client.message += data;
+  		if(data === "\b"){
+  			client.message = client.message.slice(0,-1);
+  		}
+  		else{
+	  		client.message += data;
+	  	}
+	  	client.stream.write("\r\033[K" + client.message);
   	}
 
   });
@@ -102,9 +184,7 @@ var server = net.createServer(function (stream) {
   stream.addListener("end", function() {
     clients.splice(clients.indexOf(client), 1);
 
-    clients.forEach(function(c) {
-      c.stream.write(client.name + " has left.\r\n");
-    });
+    sendMessage(client.name + " has left.\r\n", null, true);
 
     stream.end();
   });
@@ -134,3 +214,5 @@ console.log("Server created.");
 server.listen(7000, function(){
 	console.log("Chat server listening on port 7000.")
 });
+
+})(this);
