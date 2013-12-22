@@ -229,7 +229,8 @@ var nameInvalid = function(name){
 
 console.log("Server created.");
 server.listen(8080, function(){
-	console.log("Chat server listening on port 8080.")
+	var address = server.address();
+	console.log("Chat server listening on port " + address['port']);
 });
 
 })(this);
