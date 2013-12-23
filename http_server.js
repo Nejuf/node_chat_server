@@ -1,9 +1,14 @@
 (function(root){ "use-strict";
 
-var node_static = require('node-static');
+var nodeStatic = require('node-static');
 var http = require('http');
+var path = require('path');
 
-var static_server = new(node_static.Server)('./public');
+console.log('__filename', __filename);
+console.log('__dirname', __dirname);
+
+var staticFilePath = './public';
+var staticServer = new(nodeStatic.Server)(path.resolve(__dirname,'public'));
 
 var http_server = http.createServer(function(req, res){
 	var url = req.url;
@@ -13,7 +18,7 @@ var http_server = http.createServer(function(req, res){
 		console.log('Request error: ', error);
 	});
 
-	static_server.serve(req, res, function(err, result){
+	staticServer.serve(req, res, function(err, result){
 		if (err) { // There was an error serving the file
       console.log("Error serving " + req.url + " - " + err.message);
 
