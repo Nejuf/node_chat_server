@@ -29,11 +29,11 @@ http_server.on('clientError', function(exception, socket){
 });
 
 try{
-	http_server.listen(80);
+	http_server.listen(3000);
 }
 catch(err){
 	console.log("HTTP Server listening error: ", err);
 }
 
-console.log('HTTP server running at port 80');
+console.log('HTTP server running at port 3000');
 })(this);
