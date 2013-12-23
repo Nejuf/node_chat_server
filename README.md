@@ -9,4 +9,4 @@ Or by visiting the site from a browser. http://54.201.112.102:80
 Port list:
 * TCP Server - 8080
 * Web Socket Server - 8000
-* HTTP Server - 80
+* HTTP Server - 3000
