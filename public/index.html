@@ -18,7 +18,7 @@
 	</form>
 </div>
 <script>
-	var socket = WebSocketIO.createSocket('127.0.0.1', 8000, $('ul.chat-messages'));
+	var socket = WebSocketIO.createSocket(location.hostname, 8000, $('ul.chat-messages'));
 
 	$('.chat-form').submit(function(event){
 		event.preventDefault();
