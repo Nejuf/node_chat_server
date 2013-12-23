@@ -1,21 +1,28 @@
+(function(root){ "use-strict";
+
 var net = require('net');
 var WebSocketServer = require('ws').Server
   , wss = new WebSocketServer({port: 8000});
 
 wss.on('connection', function(ws) {
     ws.on('message', processMessage.bind(ws));
-    ws.send('Server: Greetings!', sendCallback);
-    ws.username = 'User' + wss.clients.length;
-    ws.tcp = net.connect({port: 8080}, function(){ console.log('Socket connected to TCP server.')});
+
+    ws.tcp = net.connect({port: 8080}, function(){ console.log('WS connected to TCP server.')});
     ws.tcp.on('data', function(data){
-    	console.log('ws.tcp.on data: ', data.toString());
+    	console.log('WS TCP data: ', data.toString());
     	//TODO: Check for special instructions from TCP or extract username
 		  ws.send(data.toString(), sendCallback);
     });
     ws.tcp.on('end', function() {
-		  console.log('ws.tcp.on end disconnected');
+		  console.log('WS TCP disconnected');
+		  ws.send('The TCP server has disconnected', sendCallback);
+		  //TODO: Close web socket if the user intentionally quit, 
+		  //      otherwise attempt to reconnect
 		});
-    wss.broadcast('Server: ' + ws.username + ' has joined the chat.');
+    ws.tcp.on('error', function(error) {
+		  console.log('WS TCP Error', error);
+		  ws.send('Encountered TCP Socket Error.', sendCallback);
+		});
 });
 
 wss.broadcast = function(data) {
@@ -40,3 +47,5 @@ var processMessage = function(message){
   }
   this.tcp.write(JSON.stringify(jsonData));
 };
+
+})(this);
