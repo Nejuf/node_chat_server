@@ -27,7 +27,7 @@ var server = net.createServer(function (stream) {
   var client = new Client(stream);
   clients.push(client);
 
-  stream.setTimeout(0);
+  stream.setTimeout(40*60*1000);//in milliseconds
   stream.setEncoding("utf8");
 
   var sendMessage = function(message, target, fromSystem){
@@ -184,22 +184,24 @@ var server = net.createServer(function (stream) {
   	}
   	else{
   		if(stream.isCLI && data === "\b"){
-  			client.message = client.message.slice(0,-1);
+  			message = client.message.slice(0,-1);
   		}
   		else{
 	  		client.message += data;
 	  	}
 	  	if(stream.isCLI){
-		  	client.stream.write("\r\033[K" + client.message);
+		  	stream.write("\r\033[K" + client.message);
 	  	}
 	  	else {
-		  	client.stream.write(client.message);
+		  	stream.write(client.message);
 	  	}
   	}
 
   });
 
 	stream.addListener("timeout", function(){
+		console.log('stream timed-out');
+		sendMessage(client.name + " has timed-out.", "global", true);
 		stream.end();
 	});
 
@@ -216,6 +218,7 @@ var server = net.createServer(function (stream) {
 		if(client.room){
 			client.room.members.splice(client.room.members.indexOf(client), 1);
 			sendMessage(client.name + " has left the room.", "room", true);
+			client.room = null;
 		}
 
 		if (newRoom){
