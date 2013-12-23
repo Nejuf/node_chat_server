@@ -4,10 +4,29 @@
 <head>
 <title>Chat</title>
 <script src="http://code.jquery.com/jquery-1.10.1.min.js" type="text/javascript"></script>
+<script src="/javascripts/ws.js" type="text/javascript"></script>
 </head>
 
 <body>
 <h1>Welcome to Chat!</h1>
+<div class="chat-ui">
+	<ul class="chat-messages">
+	</ul>
+	<form class="chat-form" action="#form" method="POST">
+		<input class="chat-input" type="textarea"></input>
+		<input type="submit" value="Send">
+	</form>
+</div>
+<script>
+	$('.chat-form').submit(function(event){
+		event.preventDefault();
+		console.log($(event.currentTarget).find('.chat-input').val());
+		//TODO take message and send through socket
+		var msg = $(event.currentTarget).find('.chat-input').val();
+		WebSocketIO.socket.emit(msg);
+		$(event.currentTarget).find('.chat-input').val("");
+	});
+</script>
 </body>
 
 </html>

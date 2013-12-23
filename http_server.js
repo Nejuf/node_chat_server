@@ -1,23 +1,22 @@
 (function(root){ "use-strict";
 
+var node_static = require('node-static');
 var http = require('http');
-var fs = require('fs');
+
+var static_server = new(node_static.Server)('./public');
 
 var http_server = http.createServer(function(req, res){
 	var url = req.url;
-	if(url == '/'){
-		url = '/public/index.html';
-	}
+	console.log(url);
 
-	fs.readFile('.'+url, { encoding: 'utf8' }, function(err, data){
-		if(err){
-			res.writeHead(404, { 'Content-Type': 'text/plain' });
-			res.end('File not found.');
-		}
-		else{
-			res.writeHead(200, { 'Content-Type': 'text/html' });
-			res.end(data);
-		}
+	static_server.serve(req, res, function(err, result){
+		if (err) { // There was an error serving the file
+      console.log("Error serving " + req.url + " - " + err.message);
+
+      // Respond to the client
+      res.writeHead(err.status, err.headers);
+      res.end();
+    }
 	});
 });
 http_server.listen(80);

@@ -1,0 +1,29 @@
+{
+  "name": "chat_server",
+  "version": "0.0.1",
+  "description": "A simple chat server.",
+  "main": "chat.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Nejuf/node_chat_server.git"
+  },
+  "keywords": [
+    "chat",
+    "node",
+    "tcp",
+    "sockets"
+  ],
+  "author": "Nejuf <nejuf.rowan@gmail.com>",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/Nejuf/node_chat_server/issues"
+  },
+  "dependencies": {
+  	"ws": "0.4.x",
+  	"node-static": "0.7.x"
+  },
+  "engine": "0.10.21"
+}

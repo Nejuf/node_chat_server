@@ -7,6 +7,7 @@ var RESERVED_NAMES = ['user', 'users', 'self', 'bot', 'mod', 'moderator', 'admin
 var Client = function(stream) {
   this.name = null;
   this.stream = stream;
+  stream.isCLI = false;
   this.message = "";
   this.room = null;
 }
@@ -42,7 +43,12 @@ var server = net.createServer(function (stream) {
 				fromName = fromSystem ? "System" : client.name
 
 	  		clients.forEach(function(c) {
-	        c.stream.write("\r\033[K" + fromName + ": " + message + "\r\n" + c.message);
+	  			if(c.stream.isCLI) {
+		        c.stream.write("\r\033[K" + fromName + ": " + message + "\r\n" + c.message);
+	  			}
+	  			else {
+		        c.stream.write(fromName + ": " + message + "\r\n" + c.message);
+	  			}
 	      });
   		break;
   		case "room":
@@ -51,7 +57,12 @@ var server = net.createServer(function (stream) {
 	  			fromName = fromSystem ? "System" : client.name
 
 		  		client.room.members.forEach(function(c) {
-		        c.stream.write("\r\033[K" + fromName + ": " + message + "\r\n" + c.message);
+		  			if(c.stream.isCLI) {
+			        c.stream.write("\r\033[K" + fromName + ": " + message + "\r\n" + c.message);
+		  			}
+		  			else {
+			        c.stream.write(fromName + ": " + message + "\r\n" + c.message);
+		  			}
 		      });
 		  	}
 		  	else {
@@ -65,8 +76,22 @@ var server = net.createServer(function (stream) {
   var enteringUsername = true;
 
   stream.addListener("data", function (data) {
-  	if (data.match(/\n/)){
-  		stream.write('\033[1A' + '\r\033[K');//clears input (previous line)
+  	var jsonData;
+  	try{
+ 			//FROM Web Client
+  		jsonData = JSON.parse(data);
+  		client.message = jsonData.message;
+  		stream.isCLI = false;
+  	}
+  	catch(err){
+  		//FROM CLI
+  		stream.isCLI = true;
+  	}
+  	console.log('stream data: ' + data);
+  	if (data.match(/\n/) || jsonData){
+  		if(stream.isCLI){
+	  		stream.write('\033[1A' + '\r\033[K');//clears input (previous line)
+	  	}
   		
   		if(enteringUsername){
   			name = client.message;
@@ -158,13 +183,18 @@ var server = net.createServer(function (stream) {
 	  	}
   	}
   	else{
-  		if(data === "\b"){
+  		if(stream.isCLI && data === "\b"){
   			client.message = client.message.slice(0,-1);
   		}
   		else{
 	  		client.message += data;
 	  	}
-	  	client.stream.write("\r\033[K" + client.message);
+	  	if(stream.isCLI){
+		  	client.stream.write("\r\033[K" + client.message);
+	  	}
+	  	else {
+		  	client.stream.write(client.message);
+	  	}
   	}
 
   });
