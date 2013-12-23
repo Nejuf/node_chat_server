@@ -9,6 +9,10 @@ var http_server = http.createServer(function(req, res){
 	var url = req.url;
 	console.log(url);
 
+	req.on('error', function(error){
+		console.log('Request error: ', error);
+	});
+
 	static_server.serve(req, res, function(err, result){
 		if (err) { // There was an error serving the file
       console.log("Error serving " + req.url + " - " + err.message);
@@ -19,7 +23,17 @@ var http_server = http.createServer(function(req, res){
     }
 	});
 });
-http_server.listen(80);
+
+http_server.on('clientError', function(exception, socket){
+	console.log('HTTP Server client error: ', exception, socket);
+});
+
+try{
+	http_server.listen(80);
+}
+catch(err){
+	console.log("HTTP Server listening error: ", err);
+}
 
 console.log('HTTP server running at port 80');
 })(this);
