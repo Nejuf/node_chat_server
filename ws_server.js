@@ -10,7 +10,6 @@ wss.on('connection', function(ws) {
     ws.tcp.on('data', function(data){
     	console.log('ws.tcp.on data: ', data.toString());
     	//TODO: Check for special instructions from TCP or extract username
-		  // wss.broadcast(data.toString());
 		  ws.send(data.toString(), sendCallback);
     });
     ws.tcp.on('end', function() {
