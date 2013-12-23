@@ -8,9 +8,6 @@ var static_server = new(node_static.Server)('./public');
 var http_server = http.createServer(function(req, res){
 	var url = req.url;
 	console.log(url);
-	if(req.url == '/'){
-		req.url = '/index.html';
-	}
 
 	req.on('error', function(error){
 		console.log('Request error: ', error);
