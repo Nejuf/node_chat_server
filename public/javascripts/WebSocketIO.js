@@ -17,8 +17,8 @@ WebSocketIO.createSocket = function(host, port, $ul){
 		var msg = event.data;
 		var li = '<li class="chat-message">' + msg + '</li>';
 
-		while $ul.find('li.chat-message').length > 15 {
-			$ul.find('li.chat-message').first.remove();
+		while ($ul.find('li.chat-message').length > 15) {
+			$ul.find('li.chat-message').first().remove();
 		}
 		$ul.append(li);
 	};
